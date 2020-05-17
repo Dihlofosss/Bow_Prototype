@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using UnityEngine;
 
 public class StickInTarget : MonoBehaviour
@@ -7,11 +8,27 @@ public class StickInTarget : MonoBehaviour
     [SerializeField] private LayerMask layer;
     [SerializeField, Range(0,30)] private float _stickSpeed = 15f;
 
+    [SerializeField] bool _selfdestructCountdown = false;
+    //[SerializeField, ] private float timeToLive = 5f;
+
+    private bool _inCollision = false;
+    private bool _arrowIsStuck = false;
+    private bool _doNotStopTheArrow = false;
     private Rigidbody rb;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        _inCollision = true;
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        _inCollision = false;
     }
 
     void OnTriggerEnter(Collider collision)
@@ -21,24 +38,17 @@ public class StickInTarget : MonoBehaviour
         {
             if(rb.velocity.magnitude <= _stickSpeed)
             {
+                _doNotStopTheArrow = true;
                 rb.velocity *= -.5f;
-
-                return;
             }
-            rb.useGravity = false;
-            Debug.Log("We hit the target");
-            //gameObject.GetComponent<Rigidbody>().isKinematic = true;
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if (rb.velocity.magnitude <= 0.1f)
-            return;
-
-        if(((1 << other.gameObject.layer) & layer ) != 0)
-        {
-           // StopArrowSlowly();
+        if(!_arrowIsStuck && !_doNotStopTheArrow)
+        {           
+           StopArrowSlowly();
         }
     }
 
@@ -46,7 +56,7 @@ public class StickInTarget : MonoBehaviour
     void Update()
     {
         Debug.Log("Velocity " + rb.velocity.magnitude);
-        if (gameObject.GetComponent<Rigidbody>().isKinematic)
+        if (gameObject.GetComponent<Rigidbody>().isKinematic || _inCollision)
             return;
         transform.forward = Vector3.Slerp(transform.forward, gameObject.GetComponent<Rigidbody>().velocity.normalized, Time.deltaTime);
     }
@@ -59,6 +69,7 @@ public class StickInTarget : MonoBehaviour
             //rb.velocity *= 0f;
             rb.isKinematic = true;
             rb.Sleep();
+            _arrowIsStuck = true;
         }
     }
 }

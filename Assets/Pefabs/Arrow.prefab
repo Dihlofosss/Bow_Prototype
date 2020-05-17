@@ -251,3 +251,5 @@ MonoBehaviour:
   layer:
     serializedVersion: 2
     m_Bits: 256
+  _stickSpeed: 10
+  _selfdestructCountdown: 0
